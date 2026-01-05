@@ -52,7 +52,7 @@ function sendJSON(res, statusCode, data) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type'
   });
   res.end(JSON.stringify(data));
@@ -69,7 +69,7 @@ const server = http.createServer(async (req, res) => {
   if (method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type'
     });
     res.end();
@@ -147,6 +147,66 @@ const server = http.createServer(async (req, res) => {
       });
     }
   }
+  else if (pathname === '/products' && method === 'PUT') {
+    // PUT /products - Update produk
+    try {
+      const body = await getRequestBody(req);
+      const updateData = JSON.parse(body);
+
+      // Validasi ID wajib ada
+      if (!updateData.id) {
+        sendJSON(res, 400, {
+          success: false,
+          message: 'Product ID is required for update'
+        });
+        return;
+      }
+
+      // Cari index produk berdasarkan ID
+      const productIndex = products.findIndex(p => p.id === updateData.id);
+      
+      if (productIndex === -1) {
+        sendJSON(res, 404, {
+          success: false,
+          message: `Product with id '${updateData.id}' not found`
+        });
+        return;
+      }
+
+      // Validasi stok tidak boleh negatif
+      if (updateData.stock !== undefined && updateData.stock < 0) {
+        sendJSON(res, 400, {
+          success: false,
+          message: 'Stock cannot be negative'
+        });
+        return;
+      }
+
+      // Update field yang dikirim (merge dengan data lama)
+      const updatedProduct = {
+        ...products[productIndex],
+        ...updateData,
+        id: products[productIndex].id // Pastikan ID tidak berubah
+      };
+
+      // Update di array memory
+      products[productIndex] = updatedProduct;
+
+      // Auto-save ke file
+      saveData();
+
+      sendJSON(res, 200, {
+        success: true,
+        message: 'Product updated successfully',
+        data: updatedProduct
+      });
+    } catch (error) {
+      sendJSON(res, 400, {
+        success: false,
+        message: 'Invalid JSON body: ' + error.message
+      });
+    }
+  }
   else if (pathname === '/' && method === 'GET') {
     // Root endpoint - Info API
     sendJSON(res, 200, {
@@ -156,7 +216,8 @@ const server = http.createServer(async (req, res) => {
       endpoints: {
         'GET /products': 'Get all products',
         'GET /products?id=PROD-xx': 'Get product by ID',
-        'POST /products': 'Add new product'
+        'POST /products': 'Add new product',
+        'PUT /products': 'Update existing product'
       }
     });
   }

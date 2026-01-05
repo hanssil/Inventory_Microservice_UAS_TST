@@ -216,7 +216,73 @@ Content-Type: application/json
 
 ---
 
-### 4. Root Endpoint (API Info)
+### 4. Update Product (Edit)
+Mengupdate data produk yang sudah ada. Data akan otomatis disimpan ke file `data/products.json`.
+
+**Endpoint:**
+```
+PUT /products
+```
+
+**Request Headers:**
+```
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "id": "PROD-001",
+  "name": "Laptop ASUS ROG Strix G15 (Updated)",
+  "price": 17500000,
+  "stock": 20
+}
+```
+*Note: Hanya field yang ingin diupdate yang perlu dikirim (kecuali `id` yang wajib). Field lain akan tetap menggunakan nilai lama.*
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Product updated successfully",
+  "data": {
+    "id": "PROD-001",
+    "name": "Laptop ASUS ROG Strix G15 (Updated)",
+    "category": "Laptop",
+    "price": 17500000,
+    "stock": 20,
+    "weight_kg": 2.5
+  }
+}
+```
+
+**Response (404 Not Found):**
+```json
+{
+  "success": false,
+  "message": "Product with id 'PROD-999' not found"
+}
+```
+
+**Response (400 Bad Request - Stok Negatif):**
+```json
+{
+  "success": false,
+  "message": "Stock cannot be negative"
+}
+```
+
+**Response (400 Bad Request - ID Tidak Ada):**
+```json
+{
+  "success": false,
+  "message": "Product ID is required for update"
+}
+```
+
+---
+
+### 5. Root Endpoint (API Info)
 Menampilkan informasi dasar tentang API.
 
 **Endpoint:**
@@ -233,7 +299,8 @@ GET /
   "endpoints": {
     "GET /products": "Get all products",
     "GET /products?id=PROD-xx": "Get product by ID",
-    "POST /products": "Add new product"
+    "POST /products": "Add new product",
+    "PUT /products": "Update existing product"
   }
 }
 ```
